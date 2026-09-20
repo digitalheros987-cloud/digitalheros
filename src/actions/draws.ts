@@ -104,9 +104,44 @@ export async function publishDrawAction(simulationDataJson: string): Promise<{
     await verifyAdmin();
     const adminSupabase = createAdminClient();
 
-    const sim: DrawSimulationResult = JSON.parse(simulationDataJson);
+    const clientSim: DrawSimulationResult = JSON.parse(simulationDataJson);
 
-    // 1. Insert into draws table
+    // 1. Gather fresh eligible participants directly on the server
+    // Ensures we do not trust client-supplied winner lists and catches scores updated before publish
+    const { participants, activeSubscriberCount, error: partErr } = await getEligibleDrawParticipants(adminSupabase);
+    if (partErr) {
+      return { success: false, error: `Failed to retrieve participants: ${partErr.message}` };
+    }
+
+    // 2. Fetch rollover from the last published draw
+    const { data: lastDraw } = await getLastPublishedDraw(adminSupabase);
+    let previousRolloverCents = 0;
+    if (lastDraw) {
+      const { data: lastTiers } = await adminSupabase
+        .from('prize_tiers')
+        .select('*')
+        .eq('draw_id', lastDraw.id)
+        .eq('match_tier', 5)
+        .single();
+
+      if (lastTiers && !lastTiers.is_claimed) {
+        previousRolloverCents = lastTiers.total_amount_cents;
+      }
+    }
+
+    // 3. Re-execute DrawEngine deterministically using the exact seed from the simulation
+    // Winning numbers are 100% identical to simulation preview, while evaluating live participants securely
+    const sim = DrawEngine.execute({
+      drawPeriod: clientSim.drawPeriod,
+      drawMode: clientSim.drawMode || 'random',
+      seed: clientSim.seed,
+      participants,
+      activeSubscriberCount,
+      previousRolloverCents,
+      algorithmVersion: clientSim.algorithmVersion,
+    });
+
+    // 4. Insert into draws table
     const { data: draw, error: drawErr } = await adminSupabase
       .from('draws')
       .insert({
@@ -193,27 +228,48 @@ export async function publishDrawAction(simulationDataJson: string): Promise<{
 
     // 5. Insert winners
     const allWinners = [
-      ...sim.tiers.tier5.winners.map((userId) => ({
-        draw_id: drawId,
-        user_id: userId,
-        match_tier: 5,
-        prize_amount_cents: sim.tiers.tier5.prizePerWinnerCents,
-        status: 'pending_proof',
-      })),
-      ...sim.tiers.tier4.winners.map((userId) => ({
-        draw_id: drawId,
-        user_id: userId,
-        match_tier: 4,
-        prize_amount_cents: sim.tiers.tier4.prizePerWinnerCents,
-        status: 'pending_proof',
-      })),
-      ...sim.tiers.tier3.winners.map((userId) => ({
-        draw_id: drawId,
-        user_id: userId,
-        match_tier: 3,
-        prize_amount_cents: sim.tiers.tier3.prizePerWinnerCents,
-        status: 'pending_proof',
-      })),
+      ...sim.tiers.tier5.winners.map((userId) => {
+        const ev = sim.evaluations.find((e) => e.userId === userId);
+        return {
+          draw_id: drawId,
+          user_id: userId,
+          match_count: ev?.matchCount ?? 5,
+          match_tier: 5,
+          prize_amount_cents: sim.tiers.tier5.prizePerWinnerCents,
+          scores_snapshot: ev?.scores ?? [],
+          winning_numbers_snapshot: sim.winningNumbers,
+          verification_status: 'pending',
+          status: 'pending_proof',
+        };
+      }),
+      ...sim.tiers.tier4.winners.map((userId) => {
+        const ev = sim.evaluations.find((e) => e.userId === userId);
+        return {
+          draw_id: drawId,
+          user_id: userId,
+          match_count: ev?.matchCount ?? 4,
+          match_tier: 4,
+          prize_amount_cents: sim.tiers.tier4.prizePerWinnerCents,
+          scores_snapshot: ev?.scores ?? [],
+          winning_numbers_snapshot: sim.winningNumbers,
+          verification_status: 'pending',
+          status: 'pending_proof',
+        };
+      }),
+      ...sim.tiers.tier3.winners.map((userId) => {
+        const ev = sim.evaluations.find((e) => e.userId === userId);
+        return {
+          draw_id: drawId,
+          user_id: userId,
+          match_count: ev?.matchCount ?? 3,
+          match_tier: 3,
+          prize_amount_cents: sim.tiers.tier3.prizePerWinnerCents,
+          scores_snapshot: ev?.scores ?? [],
+          winning_numbers_snapshot: sim.winningNumbers,
+          verification_status: 'pending',
+          status: 'pending_proof',
+        };
+      }),
     ];
 
     if (allWinners.length > 0) {
@@ -224,7 +280,9 @@ export async function publishDrawAction(simulationDataJson: string): Promise<{
     }
 
     revalidatePath('/admin');
+    revalidatePath('/admin/winners');
     revalidatePath('/draws');
+    revalidatePath('/winnings');
     return { success: true, drawId };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : String(err) };

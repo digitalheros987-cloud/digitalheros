@@ -1,14 +1,11 @@
 'use client';
 
-import { PublishedDrawDetails } from '@/lib/services/draws';
+import { PublishedDrawDetails, UserWinningsDetails } from '@/lib/services/draws';
+import Link from 'next/link';
 
 interface DrawCardProps {
   draw: PublishedDrawDetails;
-  userWinnings?: {
-    match_tier: number;
-    prize_amount_cents: number;
-    status: string;
-  } | null;
+  userWinnings?: UserWinningsDetails | null;
 }
 
 export function DrawCard({ draw, userWinnings }: DrawCardProps) {
@@ -40,12 +37,41 @@ export function DrawCard({ draw, userWinnings }: DrawCardProps) {
 
       {/* User Winning Alert */}
       {userWinnings && (
-        <div className="p-4 bg-green-50 border border-green-300 rounded-lg text-green-900">
-          <div className="font-bold flex items-center gap-2">
-            <span>🎉</span> Congratulations! You won Tier {userWinnings.match_tier}!
+        <div className="p-4 bg-green-50 border border-green-300 rounded-lg text-green-950 space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="font-bold flex items-center gap-2">
+              <span className="text-xl">🎉</span>
+              <span>Congratulations! You won Tier {userWinnings.match_tier} ({userWinnings.match_count || userWinnings.match_tier} matches)!</span>
+            </div>
+            <Link
+              href="/winnings"
+              className="text-xs font-semibold text-green-800 underline hover:text-green-950 whitespace-nowrap"
+            >
+              View in My Winnings →
+            </Link>
           </div>
-          <div className="text-sm mt-1">
-            Prize amount: <strong>£{(userWinnings.prize_amount_cents / 100).toFixed(2)}</strong> (Status: {userWinnings.status})
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm pt-1 border-t border-green-200">
+            <div>
+              Prize Amount: <strong className="font-mono text-base font-bold text-green-900">£{(userWinnings.prize_amount_cents / 100).toFixed(2)}</strong>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-green-800">Verification:</span>
+              {userWinnings.verification_status === 'verified' && (
+                <span className="px-2 py-0.5 rounded text-xs font-bold bg-green-200 text-green-900 border border-green-300">
+                  ✓ Verified
+                </span>
+              )}
+              {userWinnings.verification_status === 'pending' && (
+                <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-200 text-amber-900 border border-amber-300">
+                  ⏳ Pending Admin Review
+                </span>
+              )}
+              {userWinnings.verification_status === 'rejected' && (
+                <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-200 text-red-900 border border-red-300">
+                  ✗ Rejected
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}

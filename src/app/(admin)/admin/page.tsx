@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { DrawAdminPanel } from '@/components/draws/DrawAdminPanel';
 import { getPublishedDraws } from '@/lib/services/draws';
+import Link from 'next/link';
 
 export default async function AdminPage() {
   const supabase = createClient();
@@ -36,7 +37,13 @@ export default async function AdminPage() {
             Configure monthly parameters, simulate lottery or consistency-weighted outcomes, and publish official results.
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
+          <Link
+            href="/admin/winners"
+            className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-semibold shadow transition-colors"
+          >
+            🏆 Winner Verification Center →
+          </Link>
           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
             ● Remote DB Connected
           </span>

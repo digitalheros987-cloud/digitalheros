@@ -31,8 +31,14 @@ export interface PublishedDrawDetails extends DrawRecord {
     id: string;
     user_id: string;
     match_tier: number;
+    match_count: number;
     prize_amount_cents: number;
     status: string;
+    verification_status: 'pending' | 'verified' | 'rejected';
+    scores_snapshot?: number[] | null;
+    winning_numbers_snapshot?: number[] | null;
+    verified_at?: string | null;
+    verified_by?: string | null;
   }>;
 }
 
@@ -112,6 +118,18 @@ export async function getPublishedDrawDetails(
   };
 }
 
+export interface UserWinningsDetails {
+  id: string;
+  match_tier: number;
+  match_count: number;
+  prize_amount_cents: number;
+  status: string;
+  verification_status: 'pending' | 'verified' | 'rejected';
+  scores_snapshot?: number[] | null;
+  winning_numbers_snapshot?: number[] | null;
+  verified_at?: string | null;
+}
+
 /**
  * Checks if a specific user won a prize in a draw.
  */
@@ -119,10 +137,10 @@ export async function getUserDrawWinnings(
   supabase: SupabaseClient,
   userId: string,
   drawId: string
-): Promise<{ data: { match_tier: number; prize_amount_cents: number; status: string } | null; error: Error | null }> {
+): Promise<{ data: UserWinningsDetails | null; error: Error | null }> {
   const { data, error } = await supabase
     .from('winners')
-    .select('match_tier, prize_amount_cents, status')
+    .select('id, match_tier, match_count, prize_amount_cents, status, verification_status, scores_snapshot, winning_numbers_snapshot, verified_at')
     .eq('draw_id', drawId)
     .eq('user_id', userId)
     .single();
@@ -131,5 +149,5 @@ export async function getUserDrawWinnings(
     return { data: null, error: new Error(error.message) };
   }
 
-  return { data, error: null };
+  return { data: data as UserWinningsDetails | null, error: null };
 }

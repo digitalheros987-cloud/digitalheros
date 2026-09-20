@@ -47,6 +47,12 @@ export default async function AdminLayout({
               Draw Engine
             </Link>
             <Link
+              href="/admin/winners"
+              className="text-white font-medium hover:text-amber-300 transition-colors"
+            >
+              Winners
+            </Link>
+            <Link
               href="/profile"
               className="text-slate-300 hover:text-white transition-colors"
             >

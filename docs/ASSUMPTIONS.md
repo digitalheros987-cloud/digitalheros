@@ -70,3 +70,18 @@ This document identifies ambiguities within the Digital Heroes PRD and outlines 
 **PRD says:** "Random — standard lottery-style" and "5-number match, 4-number match, 3-number match".
 **Problem:** A user's 5 Stableford scores may contain duplicates (e.g. [32, 32, 35, 38, 40]), whereas a standard lottery generates 5 unique winning numbers.
 **Proposed assumption:** Matching uses multiset intersection where each unique drawn winning number can be matched at most once. A participant is placed into their highest matching tier (5, 4, or 3). A participant can only win in one tier per draw.
+
+### A-015 — Winner Verification Workflow Scope
+**PRD says:** "Verification process applies to winners only... Admin Review: Approve or reject submission... Payment states: Pending -> Paid".
+**Problem:** The PRD mentions payment states (Pending -> Paid), but monetary payouts and bank transfers are out of scope for Phase 8.
+**Proposed assumption:** Phase 8 focuses on administrative verification (`pending` -> `verified` / `rejected`). The verification audit columns (`verification_status`, `verified_at`, `verified_by`, `admin_notes`) track verification independently of monetary payout execution, and map to `winner_status` ('approved', 'rejected', 'pending_proof'). Actual monetary payouts remain separate for a future payout phase.
+
+### A-016 — Reversibility of Winner Verification
+**PRD says:** "Admin Review: Approve or reject submission".
+**Problem:** Can an administrator undo an accidental verification or rejection, or reset a winner back to pending?
+**Proposed assumption:** Yes. Administrators have the operational authority to reset a winner's status back to `pending` (or toggle between verified and rejected) if a review requires re-evaluation. All status transitions are logged in `audit_logs`.
+
+### A-017 — Verification Independence from Historical Draw Math
+**PRD says:** "Published historical results must remain reproducible even if the user's scores, subscription status, or other profile information changes later."
+**Problem:** Does changing verification status alter the underlying draw or prize tier calculation?
+**Proposed assumption:** No. The draw result, winning numbers, participant snapshots, and prize pool calculations are locked and immutable at publish time. Winner verification only updates the verification status of the recipient's claim; it does not retroactively rewrite the draw results, recalculate prize tiers, or alter historical entries.

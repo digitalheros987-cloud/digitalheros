@@ -34,6 +34,9 @@ export default async function ProfilePage() {
           <Link href="/draws" className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">
             Draws
           </Link>
+          <Link href="/winnings" className="px-4 py-2 bg-amber-500 text-slate-950 font-bold rounded hover:bg-amber-400">
+            🏆 Winnings
+          </Link>
           <form action={logout}>
             <button type="submit" className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
               Log Out

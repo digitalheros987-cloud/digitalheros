@@ -46,10 +46,16 @@
   * `WeightedDrawStrategy`: Implements variance-based weighting using score standard deviation $\sigma$, inverted weights $W_i = 1 / (\sigma_i + 1)$, and blending parameter $\alpha = 0.8$ for probabilistic sampling.
   * `PrizePoolCalculator`: Handles pool generation from active subscribers, 40% (Tier 5) / 35% (Tier 4) / 25% (Tier 3) splits, jackpot rollover, and equal prize splitting in cents.
   * `DrawEngine`: Pure orchestrator executing configured strategies and returning complete simulation/execution results.
-* **Execution & Publishing:** Admins simulate draws through `simulateDrawAction` without modifying database state. When confirmed, `publishDrawAction` persists immutable snapshots into `draws`, `draw_results`, `draw_entries`, `prize_tiers`, and `winners`.
+* **Execution & Publishing:** Admins simulate draws through `simulateDrawAction` without modifying database state. When confirmed, `publishDrawAction` persists immutable snapshots into `draws`, `draw_results`, `draw_entries`, `prize_tiers`, and `winners` (including `match_count`, `scores_snapshot`, and `winning_numbers_snapshot`).
 * **Simulation:** The engine supports previewing draws before publishing, verifying participant counts, prize pools, and rollover amounts without altering published history.
 
-## 7. Storage
+## 7. Winner Verification & Dashboards
+* **Winner Record Immutability:** Winner records in `winners` freeze the evaluated `match_count`, `match_tier`, `prize_amount_cents`, `scores_snapshot`, and `winning_numbers_snapshot` at the time of draw publication. Subsequent updates to a user's golf scores or subscription status do not alter past published winning records.
+* **Administrative Verification:** Admin controls (`verifyWinnerAction`) allow reviewing and verifying winners with audit logging in `audit_logs`. The verification state machine (`pending` -> `verified` / `rejected`, with optional reset to `pending`) tracks `verified_at`, `verified_by`, and `admin_notes`.
+* **Strict Row-Level Security:** Regular authenticated users can only SELECT winner records where `user_id = auth.uid()` and the associated draw is `published`. Direct inserts, updates, and deletes by regular users are completely blocked by RLS policies. Admins retain full management rights.
+* **Separation of Concerns:** Business logic and data access reside in `src/lib/services/winners.ts` and `src/actions/winners.ts`, keeping UI components purely presentational and interactive.
+
+## 8. Storage
 * **Supabase Storage Buckets:**
   * `charities`: Public bucket for charity logos and featured images.
   * `winner-proofs`: Private bucket. Users can upload screenshots. Only admins and the uploader can view them (enforced via RLS).

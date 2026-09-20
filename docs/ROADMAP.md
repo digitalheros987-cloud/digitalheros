@@ -49,11 +49,11 @@ This roadmap breaks down the implementation of the Digital Heroes platform into 
 * **Tests**: Pure unit tests in `tests/draw-engine.test.mjs` (27 assertions); live database integration tests in `tests/draws.test.mjs` (20 assertions).
 * **Completion Criteria**: ✅ Complete. Both random and algorithmic modes functional, simulation does not alter published history, admin publishing creates immutable snapshots and winners.
 
-## Phase 10: Winner Verification
-* **Objective**: Allow winners to upload proof; allow admins to approve/reject.
-* **Files**: `src/app/(dashboard)/winnings/*`, `src/app/(admin)/winners/*`.
-* **Dependencies**: Supabase Storage.
-* **Completion Criteria**: Winners see upload prompt; admins can view image and toggle status to `approved`/`rejected`/`paid`.
+## Phase 8: Winner Verification & Dashboard (Completed)
+* **Objective**: Implement post-draw winner identification, immutable winner records, admin winner verification workflow, strict owner-only RLS, and dedicated User and Admin winner dashboards.
+* **Files**: `supabase/migrations/20260920000005_winner_verification.sql`, `src/lib/services/winners.ts`, `src/actions/winners.ts`, `src/actions/draws.ts`, `src/app/(admin)/admin/winners/page.tsx`, `src/components/admin/WinnerManagementTable.tsx`, `src/app/(dashboard)/winnings/page.tsx`, `src/components/winnings/UserWinningsList.tsx`, `src/components/draws/DrawCard.tsx`.
+* **Tests**: Pure unit tests in `tests/winner-engine.test.mjs` (25 assertions); live database integration tests in `tests/winners.test.mjs` (27 assertions).
+* **Completion Criteria**: ✅ Complete. Winner records retain immutable match count, prize tier, calculated amount, scores snapshot, and winning numbers snapshot. Strict RLS ensures users only read their own winnings. Admins can verify, reject, or reset winner status with server-side authorization and audit logs. Published historical draw results remain immutable under user mutations.
 
 ## Phase 11: User Dashboard
 * **Objective**: Aggregate user data (subscription status, scores, selected charity, winnings) into a single view.

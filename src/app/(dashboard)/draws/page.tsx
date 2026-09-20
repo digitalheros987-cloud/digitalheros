@@ -47,6 +47,9 @@ export default async function DrawsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Link href="/winnings" className="px-4 py-2 bg-amber-500 text-slate-950 font-bold text-sm rounded hover:bg-amber-400">
+            🏆 My Winnings
+          </Link>
           <Link href="/profile" className="px-4 py-2 bg-gray-200 text-black text-sm rounded hover:bg-gray-300">
             Profile
           </Link>

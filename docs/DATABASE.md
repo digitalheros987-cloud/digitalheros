@@ -96,14 +96,22 @@ Calculated tiers for a specific draw.
 * `created_at` (Timestamps)
 
 ### `winners`
-Users who won a prize in a draw.
+Users who won a prize in a draw. Contains immutable audit snapshots and verification tracking.
 * `id` (UUID, PK)
 * `draw_id` (UUID, FK -> `draws.id`)
 * `user_id` (UUID, FK -> `profiles.id`)
 * `match_tier` (Integer) - 5, 4, or 3
-* `prize_amount_cents` (Integer)
+* `match_count` (Integer) - 3, 4, or 5 numbers matched
+* `prize_amount_cents` (Integer) - Calculated payout share in cents
+* `verification_status` (Text: `pending`, `verified`, `rejected`) - Administrative verification state
 * `status` (Enum: `pending_proof`, `reviewing`, `approved`, `rejected`, `paid`, `forfeited`)
+* `scores_snapshot` (Array of Integers) - The 5 Stableford scores evaluated at draw time
+* `winning_numbers_snapshot` (Array of Integers) - The 5 winning numbers drawn
+* `verified_at` (Timestamp) - Timestamp when admin verified or rejected the claim
+* `verified_by` (UUID, FK -> `profiles.id`) - Admin who performed verification
+* `admin_notes` (Text) - Audit notes or rejection reasoning
 * `created_at`, `updated_at` (Timestamps)
+* Unique Constraint: `(draw_id, user_id)` (A user can win at most one prize tier per draw)
 
 ### `winner_verifications`
 Uploaded proof for winning claims.
@@ -149,8 +157,8 @@ System and admin action auditing.
 
 ## Key Constraints & Indexes
 * **Row Level Security (RLS)**: Enabled on all tables.
-  * Users can SELECT their own `profiles`, `subscriptions`, `scores`, `draw_entries`, `winners`, `winner_verifications`, and `payment_records`.
-  * Users can INSERT/UPDATE/DELETE their own `scores` and `user_charity_selections`.
+  * Users can SELECT their own `profiles`, `subscriptions`, `scores`, `draw_entries`, `winner_verifications`, `payment_records`, and their own `winners` records for published draws (`auth.uid() = user_id`).
+  * Users cannot INSERT, UPDATE, or DELETE `winners` records (tamper-proof).
   * Users can SELECT published `draws`, `draw_results`, and `prize_tiers`.
   * Admins have ALL privileges across all tables (managed via an `is_admin()` SQL function).
 * **Indexes**: 
