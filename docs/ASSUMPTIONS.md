@@ -56,3 +56,17 @@ This document identifies ambiguities within the Digital Heroes PRD and outlines 
 **PRD says:** "Algorithmic — weighted by score frequency"
 **Problem:** This phrase is ambiguous. A literal interpretation using "score frequency" conflicts with the product goal of rewarding consistent players, and standard number matching mechanics don't easily adapt to weighting users directly.
 **Proposed assumption:** The algorithmic draw operates differently from the random "standard lottery style" draw. Instead of generating 5 winning numbers, the algorithmic draw calculates a consistency metric for each eligible user based on their latest 5 scores, converts this into a probability/weight, and uses weighted random selection to directly select winning users. Consistency increases probability but does not make selection deterministic.
+
+### A-012 — Subscription Simulation Architecture
+**Problem:** Integrating real payment processors early can slow down application development.
+**Proposed assumption:** During Phase 6, we implemented a simulated subscription system using Supabase. The `subscriptions` table tracks state. A `provider` column distinguishes `simulated` from future `stripe` subscriptions. Real payment processing is bypassed, and state transitions are handled entirely by secure Server Actions (using the Service Role key to bypass RLS), acting identically to how Stripe Webhooks will function later.
+
+### A-013 — Prize Pool Contribution Amount
+**PRD says:** "A fixed portion of each subscription contributes to the prize pool. Auto-calculation of each pool tier based on active subscriber count."
+**Problem:** The PRD does not specify the exact currency amount or percentage of each subscription fee allocated to the prize pool.
+**Proposed assumption:** A fixed contribution of £5.00 (500 pence / cents) per active subscriber per month contributes to the monthly prize pool. For monthly subscribers (£9.99/mo), this represents approximately 50% of the fee. For yearly subscribers (£99.90/yr amortized to £8.325/mo), the contribution is likewise 500 pence.
+
+### A-014 — Random Mode Lottery Number Matching Semantics
+**PRD says:** "Random — standard lottery-style" and "5-number match, 4-number match, 3-number match".
+**Problem:** A user's 5 Stableford scores may contain duplicates (e.g. [32, 32, 35, 38, 40]), whereas a standard lottery generates 5 unique winning numbers.
+**Proposed assumption:** Matching uses multiset intersection where each unique drawn winning number can be matched at most once. A participant is placed into their highest matching tier (5, 4, or 3). A participant can only win in one tier per draw.

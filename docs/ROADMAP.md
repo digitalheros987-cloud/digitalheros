@@ -43,18 +43,11 @@ This roadmap breaks down the implementation of the Digital Heroes platform into 
 * **Files**: `src/app/(admin)/charities/*`, `src/app/charities/*`, `src/actions/charities.ts`.
 * **Completion Criteria**: Admins can add charities with images; users can view directory and select a charity in their dashboard.
 
-## Phase 8: Draw Engine (Core Logic)
-* **Objective**: Implement the isolated random and algorithmic draw math.
-* **Files**: `src/lib/draw-engine/*`.
-* **Dependencies**: Math libraries if necessary.
-* **Tests Required**: Pure unit tests for both random and algorithmic implementations (must verify standard deviation weighting).
-* **Completion Criteria**: Engine successfully takes a mock array of users/scores and outputs 5 winning numbers and tier matches.
-
-## Phase 9: Prize Engine & Draw Execution
-* **Objective**: Connect the draw engine to the database; calculate prize pools and splits.
-* **Files**: `src/actions/draw.ts`, `src/lib/prize-pool/*`.
-* **Tests Required**: Rollover calculations, equal prize splitting math.
-* **Completion Criteria**: Admins can trigger a "simulation" and a "publish" action; database populates `prize_pools` and `winners` tables correctly.
+## Phase 7: Draw & Reward Engine (Completed)
+* **Objective**: Implement the isolated random and algorithmic draw math, prize pool calculations, tier splits (40/35/25), rollover jackpot, simulation, and admin-controlled publishing.
+* **Files**: `src/lib/draw/*`, `src/actions/draws.ts`, `src/lib/services/draws.ts`, `src/components/draws/*`, `src/app/(dashboard)/draws/page.tsx`.
+* **Tests**: Pure unit tests in `tests/draw-engine.test.mjs` (27 assertions); live database integration tests in `tests/draws.test.mjs` (20 assertions).
+* **Completion Criteria**: ✅ Complete. Both random and algorithmic modes functional, simulation does not alter published history, admin publishing creates immutable snapshots and winners.
 
 ## Phase 10: Winner Verification
 * **Objective**: Allow winners to upload proof; allow admins to approve/reject.

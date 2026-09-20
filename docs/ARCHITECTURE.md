@@ -39,10 +39,15 @@
 * **Syncing:** Webhooks update the local `subscriptions` table to determine draw eligibility and UI state in real-time without pinging Stripe on every page load.
 * **Charity Payouts (V1):** The platform uses a manual payout model. No Stripe Connect integration is used for outbound charity transfers. Instead, the platform maintains a precise ledger of funds owed to charities (`charity_contributions` table). Administrators are responsible for executing the external transfers based on these reports.
 
-## 6. The Draw Engine
-* **Isolation:** The draw engine is a standalone TypeScript class/module that takes a list of eligible users and their scores, applies the selected algorithm (Random vs Algorithmic), and returns the winners and prize splits. It makes no direct DB calls, allowing it to be 100% unit testable.
-* **Execution:** Admins trigger the draw via a Server Action. The action fetches data, runs the engine, and then persists the results to the database.
-* **Simulation:** The engine supports a "dry run" mode to fulfill the "Simulation before publish" PRD requirement.
+## 6. The Draw & Reward Engine
+* **Isolation:** The draw engine is architected as a set of pure TypeScript modules in `src/lib/draw/` independent of database and UI concerns:
+  * `PRNG`: Seeded Mulberry32 pseudo-random number generator ensuring 100% deterministic reproducibility and auditability.
+  * `RandomDrawStrategy`: Implements standard lottery-style 5-number draw (1–45) and multiset match evaluation.
+  * `WeightedDrawStrategy`: Implements variance-based weighting using score standard deviation $\sigma$, inverted weights $W_i = 1 / (\sigma_i + 1)$, and blending parameter $\alpha = 0.8$ for probabilistic sampling.
+  * `PrizePoolCalculator`: Handles pool generation from active subscribers, 40% (Tier 5) / 35% (Tier 4) / 25% (Tier 3) splits, jackpot rollover, and equal prize splitting in cents.
+  * `DrawEngine`: Pure orchestrator executing configured strategies and returning complete simulation/execution results.
+* **Execution & Publishing:** Admins simulate draws through `simulateDrawAction` without modifying database state. When confirmed, `publishDrawAction` persists immutable snapshots into `draws`, `draw_results`, `draw_entries`, `prize_tiers`, and `winners`.
+* **Simulation:** The engine supports previewing draws before publishing, verifying participant counts, prize pools, and rollover amounts without altering published history.
 
 ## 7. Storage
 * **Supabase Storage Buckets:**

@@ -53,10 +53,13 @@ Managed by application logic to maintain max 5 per user.
 Represents a monthly draw event.
 * `id` (UUID, PK)
 * `draw_period` (String) - e.g., "2026-03"
+* `draw_mode` (String) - 'random' or 'algorithmic'
 * `status` (Enum: `pending`, `simulated`, `published`)
 * `execution_timestamp` (Timestamp)
 * `jackpot_amount_cents` (Integer)
+* `total_pool_cents` (Integer)
 * `algorithm_version` (String)
+* `seed` (String) - Random seed for auditability and reproducibility
 * `audit_notes` (Text)
 * `created_at` (Timestamps)
 
