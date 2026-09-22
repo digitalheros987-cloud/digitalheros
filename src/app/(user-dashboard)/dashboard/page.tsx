@@ -233,7 +233,7 @@ export default async function DashboardPage() {
               <p className="font-medium text-brand-muted">Prizes won from matching your numbers.</p>
             </div>
             <div>
-              <UserWinningsList winnings={winnings ?? []} draws={publishedDraws ?? []} />
+              <UserWinningsList winnings={winnings ?? []} />
             </div>
           </section>
 

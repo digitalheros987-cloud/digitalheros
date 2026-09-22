@@ -15,6 +15,20 @@
   * {
     border-color: theme('colors.brand.border');
   }
+
+  /* Brutalist Tables */
+  table {
+    @apply w-full border-collapse border-2 border-brand-text bg-white text-sm font-medium;
+  }
+  thead {
+    @apply bg-brand-bg border-b-2 border-brand-text font-bold uppercase tracking-widest text-brand-text;
+  }
+  th, td {
+    @apply border-2 border-brand-text p-4;
+  }
+  tr:hover {
+    @apply bg-brand-bg/50;
+  }
 }
 
 @layer components {

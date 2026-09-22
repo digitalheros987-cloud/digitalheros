@@ -83,7 +83,7 @@ export function SubscriptionManager({ subscription, isActive, targetUserId }: Su
               <span className="px-3 py-1 bg-brand-primary text-white text-xs font-bold uppercase tracking-widest border-2 border-brand-primary">Active</span>
             </div>
             <div className="flex flex-col gap-2">
-              <h3 className="font-display font-black text-3xl uppercase tracking-tighter">Digital Heroes <span className="capitalize">{subscription?.plan_type || 'Monthly'}</span></h3>
+              <h3 className="font-display font-black text-3xl uppercase tracking-tighter">Digital Heroes <span className="capitalize">{subscription?.plan || 'Monthly'}</span></h3>
               <p className="font-bold text-brand-muted">
                 Valid until {formatFullDate(subscription?.current_period_end || '')}
               </p>

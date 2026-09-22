@@ -43,19 +43,6 @@ export default async function CharityProfilePage({ params }: { params: { id: str
                   {charity.description}
                 </div>
               </div>
-
-              {charity.website_url && (
-                <div>
-                  <a 
-                    href={charity.website_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 font-bold uppercase tracking-widest text-brand-primary hover:text-brand-accent transition-colors"
-                  >
-                    Visit Official Website <ArrowUpRight className="w-5 h-5" />
-                  </a>
-                </div>
-              )}
             </div>
 
             {/* RIGHT: IMAGE & STATS */}
@@ -79,7 +66,7 @@ export default async function CharityProfilePage({ params }: { params: { id: str
               )}
 
               {/* Data Rows */}
-              {(charity.upcoming_events || charity.impact_metrics) && (
+              {(charity.upcoming_events || charity.golf_events) && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 divide-y-2 sm:divide-y-0 sm:divide-x-2 divide-brand-text bg-brand-bg">
                   
                   {charity.upcoming_events && (
@@ -93,13 +80,13 @@ export default async function CharityProfilePage({ params }: { params: { id: str
                     </div>
                   )}
 
-                  {charity.impact_metrics && (
+                  {charity.golf_events && (
                     <div className="p-8">
                       <h3 className="text-lg font-black uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <Info className="w-5 h-5" /> Impact
+                        <Info className="w-5 h-5" /> Golf Events
                       </h3>
                       <p className="text-brand-muted font-medium whitespace-pre-wrap">
-                        {charity.impact_metrics}
+                        {charity.golf_events}
                       </p>
                     </div>
                   )}

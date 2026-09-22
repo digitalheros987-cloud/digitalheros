@@ -87,11 +87,11 @@ export function ScoreList({ scores, targetUserId }: ScoreListProps) {
                     <span className="font-display font-black text-3xl">{score.score_value}</span>
                   </div>
                   <div>
-                    <p className="font-bold uppercase tracking-widest text-brand-text mb-1">
-                      {new Date(score.date_played).toLocaleDateString(undefined, {
-                        month: 'short', day: 'numeric', year: 'numeric'
-                      })}
-                    </p>
+                     <p className="font-bold uppercase tracking-widest text-brand-text mb-1" suppressHydrationWarning>
+                       {new Date(score.date_played).toLocaleDateString('en-GB', {
+                         month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC'
+                       })}
+                     </p>
                     <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">
                       {isCounted ? 'Active Entry' : 'Archived'}
                     </p>

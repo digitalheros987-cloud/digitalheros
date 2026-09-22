@@ -43,106 +43,128 @@ export default async function AdminOverviewPage() {
   // Actually, we calculate the total prize pool in draws. 
   // Let's sum the total_pool_cents across all published draws.
   const totalPrizePoolCents = publishedDraws?.reduce((sum, d) => sum + d.total_pool_cents, 0) || 0;
-  
+
   // Total charity contributions isn't stored distinctly in draws. The PRD says "minimum 10%... User may voluntarily increase".
   // Let's pull the actual charity selections to calculate average contribution, or we can just calculate 
   // the exact sum if we have subscription payments. We don't have real payments. 
   // Let's sum the requested contribution percentages from user_charity_selection.
   const { data: charitySelections } = await supabase.from('user_charity_selections').select('contribution_percentage');
   const totalCharityContributions = charitySelections?.length || 0;
-  const avgCharityPercent = charitySelections && charitySelections.length > 0 
-    ? (charitySelections.reduce((sum, c) => sum + c.contribution_percentage, 0) / charitySelections.length) 
+  const avgCharityPercent = charitySelections && charitySelections.length > 0
+    ? (charitySelections.reduce((sum, c) => sum + c.contribution_percentage, 0) / charitySelections.length)
     : 0;
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-          Admin Dashboard
+
+    <div className="flex flex-col max-w-7xl w-full mx-auto p-4 md:p-8 pt-12">
+      <div className="flex flex-col gap-4 pb-8 mb-12 border-b-4 border-brand-text">
+        <h1 className="font-display font-black text-5xl md:text-7xl uppercase tracking-tighter text-brand-text">
+          ADMIN CONSOLE
         </h1>
-        <p className="text-sm text-slate-600 mt-1">
-          High-level overview, platform metrics, and reports.
+        <p className="text-xl font-medium text-brand-muted border-l-4 border-brand-text pl-4">
+          High-level overview, platform metrics, and control panels.
         </p>
       </div>
 
       {/* DASHBOARD SUMMARY KPI CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border-2 border-brand-text bg-white mb-16 divide-y-2 lg:divide-y-0 lg:divide-x-2 sm:divide-x-2 divide-brand-text">
+
         {/* Users */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Total Users</h3>
-          <span className="text-4xl font-extrabold text-blue-900">{totalUsers || 0}</span>
-          <Link href="/admin/users" className="mt-auto pt-4 text-sm font-medium text-blue-600 hover:underline">
-            Manage Users →
+        <div className="p-6 flex flex-col justify-between bg-white hover:bg-brand-bg transition-colors group">
+          <span className="text-xs uppercase font-bold tracking-widest text-brand-muted mb-2">Total Users</span>
+          <span className="font-display font-black text-6xl uppercase tracking-tighter text-brand-text mb-6">
+            {totalUsers || 0}
+          </span>
+          <Link href="/admin/users" className="text-sm font-bold uppercase tracking-widest text-brand-primary group-hover:text-brand-accent transition-colors border-t-2 border-brand-text pt-4 flex items-center justify-between">
+            Manage Users <span>→</span>
           </Link>
         </div>
 
         {/* Subscriptions */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Active Subscriptions</h3>
-          <span className="text-4xl font-extrabold text-emerald-700">{activeSubs || 0}</span>
-          <p className="text-xs text-slate-500 mt-2">Currently active or prepaid simulated subscriptions.</p>
+        <div className="p-6 flex flex-col justify-between bg-brand-primary text-white hover:bg-brand-primaryHover transition-colors group">
+          <span className="text-xs uppercase font-bold tracking-widest text-white/80 mb-2">Active Subs</span>
+          <span className="font-display font-black text-6xl uppercase tracking-tighter text-white mb-6">
+            {activeSubs || 0}
+          </span>
+          <p className="text-sm font-bold text-white/80 border-t-2 border-white/20 pt-4">Currently active or prepaid</p>
         </div>
 
         {/* Prize Pool */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Total Prize Pool Created</h3>
-          <span className="text-4xl font-extrabold text-amber-600">£{(totalPrizePoolCents / 100).toFixed(2)}</span>
-          <Link href="/admin/draws" className="mt-auto pt-4 text-sm font-medium text-amber-600 hover:underline">
-            Go to Draw Engine →
+        <div className="p-6 flex flex-col justify-between bg-white hover:bg-brand-bg transition-colors group">
+          <span className="text-xs uppercase font-bold tracking-widest text-brand-muted mb-2">Prize Pool Created</span>
+          <span className="font-display font-black text-5xl uppercase tracking-tighter text-brand-accent mb-6 truncate">
+            £{(totalPrizePoolCents / 100).toFixed(2)}
+          </span>
+          <Link href="/admin/draws" className="text-sm font-bold uppercase tracking-widest text-brand-primary group-hover:text-brand-accent transition-colors border-t-2 border-brand-text pt-4 flex items-center justify-between">
+            Draw Engine <span>→</span>
           </Link>
         </div>
 
         {/* Charity */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Charity Insights</h3>
-          <span className="text-3xl font-bold text-purple-900">{totalCharityContributions} <span className="text-lg font-medium text-slate-500">active pledges</span></span>
-          <p className="text-sm text-purple-700 mt-1">Avg Contribution: {avgCharityPercent.toFixed(1)}%</p>
-          <Link href="/admin/charities" className="mt-auto pt-4 text-sm font-medium text-purple-600 hover:underline">
-            Manage Charities →
+        <div className="p-6 flex flex-col justify-between bg-brand-text text-brand-bg hover:bg-black transition-colors group">
+          <span className="text-xs uppercase font-bold tracking-widest text-brand-bg/60 mb-2">Charity Pledges</span>
+          <div>
+            <span className="font-display font-black text-6xl uppercase tracking-tighter text-brand-bg">
+              {totalCharityContributions}
+            </span>
+            <span className="text-xl font-bold text-brand-muted ml-2">active</span>
+          </div>
+          <Link href="/admin/charities" className="text-sm font-bold uppercase tracking-widest text-brand-bg hover:text-brand-accent transition-colors border-t-2 border-brand-bg/20 pt-4 mt-6 flex items-center justify-between">
+            Manage Charities <span>→</span>
           </Link>
         </div>
 
         {/* Draws */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Official Draws</h3>
-          <span className="text-4xl font-extrabold text-indigo-900">{publishedDraws?.length || 0}</span>
-          <span className="text-sm text-slate-500 mt-2">Historically published draws.</span>
+        <div className="p-6 flex flex-col justify-between bg-white hover:bg-brand-bg transition-colors group">
+          <span className="text-xs uppercase font-bold tracking-widest text-brand-muted mb-2">Official Draws</span>
+          <span className="font-display font-black text-6xl uppercase tracking-tighter text-brand-text mb-6">
+            {publishedDraws?.length || 0}
+          </span>
+          <p className="text-sm font-bold text-brand-muted border-t-2 border-brand-text pt-4">Historically published draws</p>
         </div>
 
         {/* Winners */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Total Winners</h3>
-          <span className="text-4xl font-extrabold text-rose-700">{winners?.length || 0}</span>
-          <Link href="/admin/winners" className="mt-auto pt-4 text-sm font-medium text-rose-600 hover:underline">
-            Review Proofs & Payouts →
+        <div className="p-6 flex flex-col justify-between bg-brand-bg hover:bg-brand-primary hover:text-white transition-colors group">
+          <span className="text-xs uppercase font-bold tracking-widest text-brand-muted group-hover:text-white/80 mb-2">Total Winners</span>
+          <span className="font-display font-black text-6xl uppercase tracking-tighter text-brand-accent group-hover:text-white mb-6">
+            {winners?.length || 0}
+          </span>
+          <Link href="/admin/winners" className="text-sm font-bold uppercase tracking-widest text-brand-primary group-hover:text-white transition-colors border-t-2 border-brand-text group-hover:border-white/20 pt-4 flex items-center justify-between">
+            Review Payouts <span>→</span>
           </Link>
         </div>
 
       </div>
 
       {/* RECENT REPORTS/ANALYTICS */}
-      <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-        <h2 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 mb-4">Latest Draw Audit Report</h2>
-        {publishedDraws && publishedDraws.length > 0 ? (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center bg-slate-50 p-4 rounded border border-slate-200">
+      <section className="flex flex-col border-t-2 border-brand-text pt-6">
+        <div className="mb-6">
+          <h2 className="font-display font-black text-3xl uppercase tracking-tighter">Latest Draw Audit</h2>
+        </div>
+        <div className="border-2 border-brand-text bg-white">
+          {publishedDraws && publishedDraws.length > 0 ? (
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-6 gap-4">
               <div>
-                <p className="text-sm font-bold text-slate-800">Draw Period: {publishedDraws[0].draw_period}</p>
-                <p className="text-xs text-slate-500">Executed: {formatFullDate(publishedDraws[0].execution_timestamp || publishedDraws[0].created_at)}</p>
+                <p className="font-display font-black text-3xl uppercase tracking-tighter">{publishedDraws[0].draw_period}</p>
+                <p className="font-bold text-brand-muted uppercase tracking-widest text-sm mt-1">Executed: {formatFullDate(publishedDraws[0].execution_timestamp || publishedDraws[0].created_at)}</p>
               </div>
-              <div className="text-right">
-                <p className="text-sm font-bold text-slate-900">Pool: £{(publishedDraws[0].total_pool_cents / 100).toFixed(2)}</p>
-                <p className="text-xs text-slate-500">Mode: {publishedDraws[0].draw_mode}</p>
+              <div className="sm:text-right">
+                <p className="font-display font-black text-2xl uppercase tracking-tighter text-brand-primary">£{(publishedDraws[0].total_pool_cents / 100).toFixed(2)}</p>
+                <p className="font-bold text-brand-muted uppercase tracking-widest text-sm mt-1">Mode: {publishedDraws[0].draw_mode}</p>
               </div>
             </div>
-            <Link href="/admin/draws" className="inline-block text-sm font-medium text-blue-600 hover:underline">
+          ) : (
+            <div className="p-8 text-center bg-brand-bg">
+              <span className="font-bold uppercase tracking-widest text-brand-muted">No draws executed yet.</span>
+            </div>
+          )}
+
+          <div className="p-4 border-t-2 border-brand-text bg-brand-bg">
+            <Link href="/admin/draws" className="text-sm font-bold uppercase tracking-widest text-brand-primary hover:text-brand-accent transition-colors flex items-center gap-2">
               View all draws and run simulations →
             </Link>
           </div>
-        ) : (
-          <p className="text-sm text-slate-500 italic">No draws have been executed yet.</p>
-        )}
+        </div>
       </section>
     </div>
   );
