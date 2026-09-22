@@ -22,7 +22,7 @@ export default async function AdminLayout({
     .single();
 
   if (!profile || profile.role !== 'admin') {
-    redirect('/profile');
+    redirect('/dashboard');
   }
 
   return (
@@ -40,24 +40,11 @@ export default async function AdminLayout({
           </div>
 
           <nav className="flex items-center space-x-4 text-sm">
-            <Link
-              href="/admin"
-              className="text-white font-medium hover:text-amber-300 transition-colors"
-            >
-              Draw Engine
-            </Link>
-            <Link
-              href="/admin/winners"
-              className="text-white font-medium hover:text-amber-300 transition-colors"
-            >
-              Winners
-            </Link>
-            <Link
-              href="/profile"
-              className="text-slate-300 hover:text-white transition-colors"
-            >
-              User Profile View
-            </Link>
+            <Link href="/admin" className="text-white font-medium hover:text-amber-300 transition-colors">Overview</Link>
+            <Link href="/admin/users" className="text-white font-medium hover:text-amber-300 transition-colors">Users</Link>
+            <Link href="/admin/draws" className="text-white font-medium hover:text-amber-300 transition-colors">Draws</Link>
+            <Link href="/admin/charities" className="text-white font-medium hover:text-amber-300 transition-colors">Charities</Link>
+            <Link href="/admin/winners" className="text-white font-medium hover:text-amber-300 transition-colors">Winners</Link>
             <span className="text-slate-600">|</span>
             <span className="text-xs text-slate-400 hidden sm:inline">
               {profile.email}

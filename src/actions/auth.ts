@@ -26,7 +26,7 @@ export async function login(formData: FormData) {
     return { error: error.message };
   }
 
-  let targetPath = '/profile';
+  let targetPath = '/dashboard';
   if (signInData.user) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -114,7 +114,7 @@ export async function register(formData: FormData) {
       password: result.data.password,
     });
     revalidatePath('/', 'layout');
-    redirect('/profile');
+    redirect('/dashboard');
   }
 
   // If session is null and not auto-confirmed, email confirmation is required
@@ -123,7 +123,7 @@ export async function register(formData: FormData) {
   }
 
   revalidatePath('/', 'layout');
-  redirect('/profile');
+  redirect('/dashboard');
 }
 
 export async function logout() {

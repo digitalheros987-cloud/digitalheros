@@ -1,6 +1,7 @@
 'use client';
 
 import { PublishedDrawDetails, UserWinningsDetails } from '@/lib/services/draws';
+import { formatFullDate } from '@/lib/utils/date';
 import Link from 'next/link';
 
 interface DrawCardProps {
@@ -10,11 +11,7 @@ interface DrawCardProps {
 
 export function DrawCard({ draw, userWinnings }: DrawCardProps) {
   const formattedDate = draw.execution_timestamp
-    ? new Date(draw.execution_timestamp).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
+    ? formatFullDate(draw.execution_timestamp)
     : draw.draw_period;
 
   return (
@@ -25,7 +22,7 @@ export function DrawCard({ draw, userWinnings }: DrawCardProps) {
             Monthly Draw · {draw.draw_period}
           </span>
           <h3 className="text-xl font-bold">Draw Results ({draw.draw_mode})</h3>
-          <p className="text-sm text-gray-500">Executed on {formattedDate}</p>
+          <p className="text-sm text-gray-500" suppressHydrationWarning>Executed on {formattedDate}</p>
         </div>
         <div className="text-right">
           <div className="text-xs text-gray-500">Total Prize Pool</div>
@@ -101,35 +98,40 @@ export function DrawCard({ draw, userWinnings }: DrawCardProps) {
           Prize Tiers
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {draw.prize_tiers.map((tier) => (
-            <div
-              key={tier.match_tier}
-              className={`p-3 rounded border text-sm ${tier.is_claimed ? 'bg-gray-50 border-gray-200' : 'bg-amber-50 border-amber-200'
-                }`}
-            >
-              <div className="font-bold flex justify-between">
-                <span>{tier.match_tier}-Number Match</span>
-                <span className="text-gray-500 font-normal">{tier.percentage_allocation}%</span>
-              </div>
-              <div className="text-lg font-mono font-bold mt-1 text-gray-900">
-                £{(tier.total_amount_cents / 100).toFixed(2)}
-              </div>
-              <div className="text-xs mt-1 text-gray-600">
-                {tier.is_claimed ? (
-                  <span className="text-green-600 font-medium">Claimed</span>
-                ) : tier.match_tier === 5 ? (
-                  <span className="text-amber-700 font-semibold">Rolled Over ➔</span>
-                ) : (
-                  <span className="text-gray-500">Unclaimed</span>
+          {draw.prize_tiers.map((tier) => {
+            const tierWinners = draw.winners?.filter((w) => w.match_tier === tier.match_tier) || [];
+            return (
+              <div
+                key={tier.match_tier}
+                className={`p-3 rounded border text-sm ${tier.is_claimed ? 'bg-gray-50 border-gray-200' : 'bg-amber-50 border-amber-200'
+                  }`}
+              >
+                <div className="font-bold flex justify-between">
+                  <span>{tier.match_tier}-Number Match</span>
+                  <span className="text-gray-500 font-normal">{tier.percentage_allocation}%</span>
+                </div>
+                <div className="text-lg font-mono font-bold mt-1 text-gray-900">
+                  £{(tier.total_amount_cents / 100).toFixed(2)}
+                </div>
+                <div className="text-xs mt-1 text-gray-600">
+                  {tier.is_claimed ? (
+                    <span className="text-green-600 font-medium">
+                      Claimed{tierWinners.length > 0 ? ` (${tierWinners.length} winner${tierWinners.length > 1 ? 's' : ''})` : ''}
+                    </span>
+                  ) : tier.match_tier === 5 ? (
+                    <span className="text-amber-700 font-semibold">Rolled Over ➔</span>
+                  ) : (
+                    <span className="text-gray-500">Unclaimed</span>
+                  )}
+                </div>
+                {tier.rollover_amount_cents > 0 && (
+                  <div className="text-xs text-purple-700 mt-0.5">
+                    (Includes £{(tier.rollover_amount_cents / 100).toFixed(2)} rollover)
+                  </div>
                 )}
               </div>
-              {tier.rollover_amount_cents > 0 && (
-                <div className="text-xs text-purple-700 mt-0.5">
-                  (Includes £{(tier.rollover_amount_cents / 100).toFixed(2)} rollover)
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

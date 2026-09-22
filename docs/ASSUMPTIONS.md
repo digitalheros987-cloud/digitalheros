@@ -85,3 +85,18 @@ This document identifies ambiguities within the Digital Heroes PRD and outlines 
 **PRD says:** "Published historical results must remain reproducible even if the user's scores, subscription status, or other profile information changes later."
 **Problem:** Does changing verification status alter the underlying draw or prize tier calculation?
 **Proposed assumption:** No. The draw result, winning numbers, participant snapshots, and prize pool calculations are locked and immutable at publish time. Winner verification only updates the verification status of the recipient's claim; it does not retroactively rewrite the draw results, recalculate prize tiers, or alter historical entries.
+
+### A-018 — Payment Status Tracking (No Real Transfers)
+**PRD says:** "Payment states must track 'Pending' to 'Paid'."
+**Problem:** Does "Paid" imply the platform must process actual bank transfers or payment disbursements?
+**Proposed assumption:** No. The `payment_status` field on `winners` tracks an administrative state only (`unpaid` → `paid`). Admins manually mark a winner as "Paid" after executing the external transfer. No Stripe Connect, bank API, or automated payout processing is implemented. This is consistent with the V1 manual payout model (see A-005).
+
+### A-019 — Proof Upload File Constraints
+**PRD says:** "Users must upload a screenshot of scores from their golf platform as proof."
+**Problem:** The PRD does not specify file format or size constraints for proof uploads.
+**Proposed assumption:** Proof uploads accept PNG, JPEG, and WebP images with a maximum file size of 5 MB. Files are stored in a private Supabase Storage bucket (`winner-proofs`). Only the uploader and administrators can view proofs, accessed via time-limited signed URLs.
+
+### A-020 — Proof Upload Eligibility
+**PRD says:** "Admin Review: Approve or reject submission."
+**Problem:** When can a user upload or re-upload proof? Can approved winners change their proof?
+**Proposed assumption:** Only winners with status `pending_proof` (initial state after draw publication) or `rejected` (admin rejected previous submission) can upload or re-upload proof. Once a winner is approved, their proof cannot be changed. Re-uploading after rejection overwrites the previous proof file and resets the verification status to `pending`.

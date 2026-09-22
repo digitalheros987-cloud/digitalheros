@@ -7,6 +7,8 @@ export interface Charity {
   is_active: boolean;
   is_spotlight: boolean;
   image_url: string | null;
+  upcoming_events?: string | null;
+  golf_events?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -60,4 +62,41 @@ export async function getUserCharitySelection(
   }
 
   return { data: data as (UserCharitySelection & { charity: Charity }) | null, error: null };
+}
+
+export async function getCharityById(
+  supabase: SupabaseClient,
+  charityId: string
+): Promise<{ data: Charity | null; error: Error | null }> {
+  const { data, error } = await supabase
+    .from('charities')
+    .select('*')
+    .eq('id', charityId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return { data: null, error: null };
+    return { data: null, error: new Error(error.message) };
+  }
+
+  return { data: data as Charity, error: null };
+}
+
+export async function getFeaturedCharity(
+  supabase: SupabaseClient
+): Promise<{ data: Charity | null; error: Error | null }> {
+  const { data, error } = await supabase
+    .from('charities')
+    .select('*')
+    .eq('is_active', true)
+    .eq('is_spotlight', true)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    return { data: null, error: new Error(error.message) };
+  }
+
+  return { data: data as Charity | null, error: null };
 }

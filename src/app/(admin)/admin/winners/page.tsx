@@ -20,7 +20,7 @@ export default async function AdminWinnersPage() {
     .single();
 
   if (!profile || profile.role !== 'admin') {
-    redirect('/profile');
+    redirect('/dashboard');
   }
 
   const [{ data: draws }, { data: winners }] = await Promise.all([

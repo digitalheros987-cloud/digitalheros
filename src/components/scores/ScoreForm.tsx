@@ -9,9 +9,11 @@ interface ScoreFormProps {
   editingScore?: Score | null;
   /** Callback to cancel editing. */
   onCancel?: () => void;
+  /** Target user ID for adding scores on behalf of another user. */
+  targetUserId?: string;
 }
 
-export function ScoreForm({ editingScore, onCancel }: ScoreFormProps) {
+export function ScoreForm({ editingScore, onCancel, targetUserId }: ScoreFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -25,6 +27,10 @@ export function ScoreForm({ editingScore, onCancel }: ScoreFormProps) {
 
     if (isEditing) {
       formData.set('id', editingScore!.id);
+    }
+
+    if (targetUserId) {
+      formData.set('targetUserId', targetUserId);
     }
 
     const action = isEditing ? updateScore : addScore;
@@ -43,43 +49,46 @@ export function ScoreForm({ editingScore, onCancel }: ScoreFormProps) {
   return (
     <form
       action={handleSubmit}
-      className="flex flex-col space-y-4 p-4 bg-white rounded-lg shadow-md border"
+      className="flex flex-col gap-6 p-6 md:p-8 bg-brand-bg border-2 border-brand-text relative"
     >
-      <h3 className="text-lg font-semibold">
-        {isEditing ? 'Edit Score' : 'Add New Score'}
-      </h3>
+      <div className="flex items-center justify-between border-b-2 border-brand-text pb-4">
+        <h3 className="font-display font-black text-2xl uppercase tracking-tighter text-brand-text">
+          {isEditing ? 'Edit Score' : 'Log Score'}
+        </h3>
+      </div>
 
       {error && (
-        <div className="p-3 text-sm text-red-600 bg-red-50 rounded" data-testid="score-error">
+        <div className="p-4 text-sm font-bold uppercase tracking-widest text-white bg-brand-accent border-2 border-brand-text" data-testid="score-error">
           {error}
         </div>
       )}
-      {success && (
-        <div className="p-3 text-sm text-green-600 bg-green-50 rounded" data-testid="score-success">
+
+      {success && !isEditing && (
+        <div className="p-4 text-sm font-bold uppercase tracking-widest text-white bg-brand-primary border-2 border-brand-text" data-testid="score-success">
           {success}
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <label className="block text-sm font-medium mb-1" htmlFor="score_value">
-            Stableford Score (1–45)
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex-1 flex flex-col gap-2">
+          <label htmlFor="score_value" className="text-sm font-bold uppercase tracking-widest text-brand-text">
+            Stableford Score
           </label>
           <input
             id="score_value"
             name="score_value"
             type="number"
-            min={1}
-            max={45}
-            step={1}
+            min="0"
+            max="100"
             required
-            defaultValue={editingScore?.score_value ?? ''}
-            className="w-full p-2 border rounded"
+            defaultValue={isEditing ? editingScore.score_value : ''}
+            className="w-full px-4 py-4 font-display font-black text-3xl bg-white border-2 border-brand-text focus:outline-none focus:ring-0 focus:border-brand-primary placeholder:text-brand-muted/30"
+            placeholder="e.g. 36"
           />
         </div>
 
-        <div className="flex-1">
-          <label className="block text-sm font-medium mb-1" htmlFor="date_played">
+        <div className="flex-1 flex flex-col gap-2">
+          <label htmlFor="date_played" className="text-sm font-bold uppercase tracking-widest text-brand-text">
             Date Played
           </label>
           <input
@@ -87,29 +96,30 @@ export function ScoreForm({ editingScore, onCancel }: ScoreFormProps) {
             name="date_played"
             type="date"
             required
-            defaultValue={editingScore?.date_played ?? ''}
-            className="w-full p-2 border rounded"
+            defaultValue={isEditing ? editingScore.date_played : new Date().toISOString().split('T')[0]}
+            className="w-full px-4 py-4 font-display font-black text-xl md:text-2xl bg-white border-2 border-brand-text focus:outline-none focus:ring-0 focus:border-brand-primary"
           />
         </div>
       </div>
 
-      <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-4 py-2 bg-black text-white rounded disabled:bg-gray-400"
-        >
-          {loading ? 'Saving...' : isEditing ? 'Update Score' : 'Add Score'}
-        </button>
+      <div className="flex flex-col sm:flex-row justify-end gap-4 pt-4 mt-2">
         {isEditing && onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 bg-gray-200 text-black rounded"
+            disabled={loading}
+            className="btn-secondary"
           >
             Cancel
           </button>
         )}
+        <button
+          type="submit"
+          disabled={loading}
+          className="btn-primary"
+        >
+          {loading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Submit Score')}
+        </button>
       </div>
     </form>
   );

@@ -59,7 +59,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register');
-  const isProtectedRoute = request.nextUrl.pathname.startsWith('/profile') || request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/scores') || request.nextUrl.pathname.startsWith('/charities') || request.nextUrl.pathname.startsWith('/subscription') || request.nextUrl.pathname.startsWith('/draws');
+  const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/scores') || request.nextUrl.pathname.startsWith('/charities') || request.nextUrl.pathname.startsWith('/subscription') || request.nextUrl.pathname.startsWith('/draws');
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
 
   // Unauthenticated users trying to access protected routes -> /login
@@ -72,7 +72,7 @@ export async function updateSession(request: NextRequest) {
   // Authenticated users trying to access login/register -> /profile
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = '/profile';
+    url.pathname = '/dashboard';
     return NextResponse.redirect(url);
   }
 
@@ -81,7 +81,7 @@ export async function updateSession(request: NextRequest) {
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
     if (!profile || profile.role !== 'admin') {
       const url = request.nextUrl.clone();
-      url.pathname = '/profile';
+      url.pathname = '/dashboard';
       return NextResponse.redirect(url);
     }
   }

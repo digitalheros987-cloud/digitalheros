@@ -55,6 +55,11 @@ This roadmap breaks down the implementation of the Digital Heroes platform into 
 * **Tests**: Pure unit tests in `tests/winner-engine.test.mjs` (25 assertions); live database integration tests in `tests/winners.test.mjs` (27 assertions).
 * **Completion Criteria**: ✅ Complete. Winner records retain immutable match count, prize tier, calculated amount, scores snapshot, and winning numbers snapshot. Strict RLS ensures users only read their own winnings. Admins can verify, reject, or reset winner status with server-side authorization and audit logs. Published historical draw results remain immutable under user mutations.
 
+## Phase 9: Winner Proof Upload & Payout Tracking (Completed)
+* **Objective**: Implement winner proof screenshot upload (PRD §1.6), admin proof review with signed URL viewing, and payment status tracking (Pending → Paid) for administrative payout management (PRD §1.7).
+* **Files**: `supabase/migrations/20260922000006_winner_proof_upload.sql`, `src/actions/winners.ts` (added `uploadWinnerProofAction`, `markWinnerPaidAction`, `markWinnerUnpaidAction`, `getProofSignedUrlAction`, `getOwnProofSignedUrlAction`), `src/lib/services/winners.ts`, `src/components/winnings/UserWinningsList.tsx`, `src/components/admin/WinnerManagementTable.tsx`.
+* **Completion Criteria**: ✅ Complete. Winners can upload golf scorecard screenshots as proof (PNG/JPEG/WebP, max 5MB). Proofs stored in private Supabase Storage bucket with signed URL access. Admin can view proofs, verify/reject submissions, and mark payouts as completed. User dashboard shows proof upload status, verification state, and payment status. All transitions are audit-logged. No real bank transfers are processed (administrative tracking only, see A-018).
+
 ## Phase 11: User Dashboard
 * **Objective**: Aggregate user data (subscription status, scores, selected charity, winnings) into a single view.
 * **Files**: `src/app/(dashboard)/page.tsx`.

@@ -1,11 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
-import { getActiveCharities, getUserCharitySelection } from '@/lib/services/charities';
-import { CharityList } from '@/components/charities/CharityList';
+import { getUserScores } from '@/lib/services/scores';
+import { ScoreForm } from '@/components/scores/ScoreForm';
+import { ScoreList } from '@/components/scores/ScoreList';
 import { logout } from '@/actions/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
-export default async function CharitiesPage() {
+export default async function ScoresPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -13,15 +14,14 @@ export default async function CharitiesPage() {
     redirect('/login');
   }
 
-  const { data: charities } = await getActiveCharities(supabase);
-  const { data: currentSelection } = await getUserCharitySelection(supabase, user.id);
+  const { data: scores } = await getUserScores(supabase, user.id);
 
   return (
     <div className="flex flex-col space-y-6 max-w-2xl w-full p-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Select Your Charity</h1>
+        <h1 className="text-3xl font-bold">My Scores</h1>
         <div className="flex gap-2">
-          <Link href="/profile" className="px-4 py-2 bg-gray-200 text-black rounded hover:bg-gray-300">
+          <Link href="/dashboard" className="px-4 py-2 bg-gray-200 text-black rounded hover:bg-gray-300">
             Profile
           </Link>
           <form action={logout}>
@@ -32,15 +32,13 @@ export default async function CharitiesPage() {
         </div>
       </div>
 
-      <p className="text-gray-600">
-        Choose a charity to support. A minimum of 10% of your subscription contribution goes to your selected charity.
-      </p>
+      {/* Add Score Form */}
+      <ScoreForm />
 
+      {/* Scores Table */}
       <div className="bg-white rounded-lg shadow p-6">
-        <CharityList
-          charities={charities ?? []}
-          currentSelection={currentSelection}
-        />
+        <h2 className="text-xl font-semibold mb-4">Your Stableford Scores</h2>
+        <ScoreList scores={scores ?? []} />
       </div>
     </div>
   );

@@ -16,6 +16,13 @@ export interface WinnerAuditRecord {
   verified_at: string | null;
   verified_by: string | null;
   admin_notes: string | null;
+  // Proof upload fields
+  proof_url: string | null;
+  proof_uploaded_at: string | null;
+  // Payment tracking fields (administrative only, no real transfers — see A-018)
+  payment_status: 'unpaid' | 'paid';
+  paid_at: string | null;
+  paid_by: string | null;
   created_at: string;
   updated_at: string;
   user?: {

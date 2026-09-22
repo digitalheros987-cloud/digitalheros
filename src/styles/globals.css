@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-brand-bg text-brand-text;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+  
+  /* Reset some default border styles to be sharp */
+  * {
+    border-color: theme('colors.brand.border');
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 bg-brand-primary text-white font-bold tracking-wide hover:bg-brand-primaryHover transition-colors border-2 border-transparent;
+  }
+  .btn-secondary {
+    @apply px-6 py-3 bg-brand-bg text-brand-text font-bold tracking-wide hover:bg-[#EAEAEA] transition-colors border-2 border-brand-text;
+  }
+}

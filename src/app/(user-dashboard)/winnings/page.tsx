@@ -43,7 +43,7 @@ export default async function WinningsPage() {
             My Scores
           </Link>
           <Link
-            href="/profile"
+            href="/dashboard"
             className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded transition-colors"
           >
             Profile

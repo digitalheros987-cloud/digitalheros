@@ -1,26 +1,44 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { scoreFormSchema } from '@/lib/validations/score';
 import { getScoreCount, getOldestScore, MAX_SCORES } from '@/lib/services/scores';
 import { revalidatePath } from 'next/cache';
 
-/**
- * Server Action: Add a new score for the authenticated user.
- *
- * Enforces the 5-score cap defined by the PRD:
- * "Only the latest 5 scores are retained; new scores automatically replace the oldest."
- * When already at 5 scores, the oldest score (by date_played ASC) is deleted first.
- */
-export async function addScore(formData: FormData) {
+async function getAuthAndClient(formData: FormData) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: 'You must be logged in to add a score.' };
+    return { user: null, targetUserId: null, client: supabase };
   }
 
-  // Validate input
+  let targetUserId = user.id;
+  let client = supabase;
+
+  const passedUserId = formData.get('targetUserId') as string;
+  if (passedUserId && passedUserId !== user.id) {
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    if (profile?.role === 'admin') {
+      targetUserId = passedUserId;
+      client = createAdminClient();
+    } else {
+      return { user: null, targetUserId: null, client: supabase, error: 'Forbidden: Admin access required.' };
+    }
+  }
+
+  return { user, targetUserId, client };
+}
+
+/**
+ * Server Action: Add a new score.
+ */
+export async function addScore(formData: FormData) {
+  const { user, targetUserId, client, error: authError } = await getAuthAndClient(formData);
+  if (authError) return { error: authError };
+  if (!user || !targetUserId) return { error: 'You must be logged in.' };
+
   const raw = {
     score_value: formData.get('score_value') as string,
     date_played: formData.get('date_played') as string,
@@ -33,117 +51,91 @@ export async function addScore(formData: FormData) {
 
   const { score_value, date_played } = result.data;
 
-  // Enforce the 5-score cap: auto-delete oldest if at the limit
-  const { count, error: countError } = await getScoreCount(supabase, user.id);
-  if (countError) {
-    return { error: 'Failed to check score count.' };
-  }
+  const { count, error: countError } = await getScoreCount(client, targetUserId);
+  if (countError) return { error: 'Failed to check score count.' };
 
   if (count >= MAX_SCORES) {
-    const { data: oldest, error: oldestError } = await getOldestScore(supabase, user.id);
-    if (oldestError || !oldest) {
-      return { error: 'Failed to find oldest score for replacement.' };
-    }
+    const { data: oldest, error: oldestError } = await getOldestScore(client, targetUserId);
+    if (oldestError || !oldest) return { error: 'Failed to find oldest score for replacement.' };
 
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await client
       .from('scores')
       .delete()
       .eq('id', oldest.id)
-      .eq('user_id', user.id); // RLS + explicit ownership check
+      .eq('user_id', targetUserId);
 
-    if (deleteError) {
-      return { error: 'Failed to remove oldest score.' };
-    }
+    if (deleteError) return { error: 'Failed to remove oldest score.' };
   }
 
-  // Insert the new score
-  const { error: insertError } = await supabase.from('scores').insert({
-    user_id: user.id,
+  const { error: insertError } = await client.from('scores').insert({
+    user_id: targetUserId,
     score_value,
     date_played,
   });
 
   if (insertError) {
-    // Handle the unique constraint violation for duplicate dates
-    if (insertError.code === '23505') {
-      return { error: 'You already have a score for this date. Please edit the existing entry instead.' };
-    }
+    if (insertError.code === '23505') return { error: 'A score for this date already exists.' };
     return { error: insertError.message };
   }
 
   revalidatePath('/scores');
+  revalidatePath('/admin/users');
   return { success: true };
 }
 
 /**
- * Server Action: Update an existing score owned by the authenticated user.
+ * Server Action: Update an existing score.
  */
 export async function updateScore(formData: FormData) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: 'You must be logged in to update a score.' };
-  }
+  const { user, targetUserId, client, error: authError } = await getAuthAndClient(formData);
+  if (authError) return { error: authError };
+  if (!user || !targetUserId) return { error: 'You must be logged in.' };
 
   const scoreId = formData.get('id') as string;
-  if (!scoreId) {
-    return { error: 'Score ID is required.' };
-  }
+  if (!scoreId) return { error: 'Score ID is required.' };
 
-  // Validate input
   const raw = {
     score_value: formData.get('score_value') as string,
     date_played: formData.get('date_played') as string,
   };
 
   const result = scoreFormSchema.safeParse(raw);
-  if (!result.success) {
-    return { error: result.error.errors[0].message };
-  }
+  if (!result.success) return { error: result.error.errors[0].message };
 
   const { score_value, date_played } = result.data;
 
-  // Update with explicit ownership check (RLS also enforces this)
-  const { error: updateError } = await supabase
+  const { error: updateError } = await client
     .from('scores')
     .update({ score_value, date_played })
     .eq('id', scoreId)
-    .eq('user_id', user.id);
+    .eq('user_id', targetUserId);
 
   if (updateError) {
-    if (updateError.code === '23505') {
-      return { error: 'You already have a score for this date.' };
-    }
+    if (updateError.code === '23505') return { error: 'A score for this date already exists.' };
     return { error: updateError.message };
   }
 
   revalidatePath('/scores');
+  revalidatePath('/admin/users');
   return { success: true };
 }
 
 /**
- * Server Action: Delete a score owned by the authenticated user.
+ * Server Action: Delete a score.
  */
 export async function deleteScore(formData: FormData) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: 'You must be logged in to delete a score.' };
-  }
+  const { user, targetUserId, client, error: authError } = await getAuthAndClient(formData);
+  if (authError) return { error: authError };
+  if (!user || !targetUserId) return { error: 'You must be logged in.' };
 
   const scoreId = formData.get('id') as string;
-  if (!scoreId) {
-    return { error: 'Score ID is required.' };
-  }
+  if (!scoreId) return { error: 'Score ID is required.' };
 
-  // Delete with explicit ownership check (RLS also enforces this)
-  const { error: deleteError } = await supabase
+  const { error: deleteError } = await client
     .from('scores')
     .delete()
     .eq('id', scoreId)
-    .eq('user_id', user.id);
+    .eq('user_id', targetUserId);
 
   if (deleteError) {
     return { error: deleteError.message };

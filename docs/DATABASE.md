@@ -107,6 +107,11 @@ Users who won a prize in a draw. Contains immutable audit snapshots and verifica
 * `status` (Enum: `pending_proof`, `reviewing`, `approved`, `rejected`, `paid`, `forfeited`)
 * `scores_snapshot` (Array of Integers) - The 5 Stableford scores evaluated at draw time
 * `winning_numbers_snapshot` (Array of Integers) - The 5 winning numbers drawn
+* `proof_url` (Text, nullable) - Storage path of the uploaded proof screenshot in the `winner-proofs` bucket
+* `proof_uploaded_at` (Timestamp, nullable) - When the proof was uploaded
+* `payment_status` (Text: `unpaid`, `paid`) - Administrative payout tracking state (no real transfers, see A-018)
+* `paid_at` (Timestamp, nullable) - When the admin marked the payout as completed
+* `paid_by` (UUID, FK -> `profiles.id`, nullable) - Admin who marked the payout
 * `verified_at` (Timestamp) - Timestamp when admin verified or rejected the claim
 * `verified_by` (UUID, FK -> `profiles.id`) - Admin who performed verification
 * `admin_notes` (Text) - Audit notes or rejection reasoning

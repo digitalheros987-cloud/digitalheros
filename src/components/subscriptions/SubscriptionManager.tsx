@@ -3,13 +3,15 @@
 import { useState } from 'react';
 import { createSimulatedSubscription, cancelSimulatedSubscription } from '@/actions/subscriptions';
 import type { Subscription } from '@/lib/services/subscriptions';
+import { formatFullDate } from '@/lib/utils/date';
 
 interface SubscriptionManagerProps {
   subscription: Subscription | null;
   isActive: boolean;
+  targetUserId?: string;
 }
 
-export function SubscriptionManager({ subscription, isActive }: SubscriptionManagerProps) {
+export function SubscriptionManager({ subscription, isActive, targetUserId }: SubscriptionManagerProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,6 +25,7 @@ export function SubscriptionManager({ subscription, isActive }: SubscriptionMana
 
     const formData = new FormData();
     formData.set('plan', selectedPlan);
+    if (targetUserId) formData.set('targetUserId', targetUserId);
 
     const result = await createSimulatedSubscription(formData);
 
@@ -41,7 +44,15 @@ export function SubscriptionManager({ subscription, isActive }: SubscriptionMana
     setError(null);
     setSuccess(null);
 
-    const result = await cancelSimulatedSubscription();
+    const formData = new FormData();
+    if (subscription?.id) {
+      formData.set('subscription_id', subscription.id);
+    }
+    if (targetUserId) {
+      formData.set('targetUserId', targetUserId);
+    }
+
+    const result = await cancelSimulatedSubscription(formData);
 
     if (result?.error) {
       setError(result.error);
@@ -52,117 +63,99 @@ export function SubscriptionManager({ subscription, isActive }: SubscriptionMana
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6 relative">
       {error && (
-        <div className="p-3 text-sm text-red-600 bg-red-50 rounded" data-testid="subscription-error">
+        <div className="p-4 text-sm font-bold uppercase tracking-widest text-white bg-brand-accent border-2 border-brand-text">
           {error}
         </div>
       )}
       {success && (
-        <div className="p-3 text-sm text-green-600 bg-green-50 rounded" data-testid="subscription-success">
+        <div className="p-4 text-sm font-bold uppercase tracking-widest text-white bg-brand-primary border-2 border-brand-text">
           {success}
         </div>
       )}
 
-      {/* DEV WARNING */}
-      <div className="p-4 bg-yellow-50 border border-yellow-400 rounded text-yellow-800 text-sm flex flex-col gap-2">
-        <strong className="flex items-center gap-2">
-          <span>⚠️</span> Development Simulator Active
-        </strong>
-        <p>
-          This application is currently in development mode. No real payments are processed.
-          Stripe will be integrated in a later phase.
-        </p>
-      </div>
-
-      {isActive && subscription ? (
-        <div className="p-6 bg-white border rounded-lg shadow-sm">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            Subscription: <span className="text-green-600">Active</span>
-          </h2>
-
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Plan Type</dt>
-              <dd className="text-lg capitalize">{subscription.plan}</dd>
+      {isActive ? (
+        <div className="flex flex-col gap-6">
+          <div className="p-6 bg-brand-bg border-2 border-brand-text">
+            <div className="flex items-center justify-between mb-6 border-b-2 border-brand-text pb-4">
+              <span className="font-bold uppercase tracking-widest text-brand-muted">Current Plan</span>
+              <span className="px-3 py-1 bg-brand-primary text-white text-xs font-bold uppercase tracking-widest border-2 border-brand-primary">Active</span>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Provider</dt>
-              <dd className="text-lg capitalize text-gray-700">{subscription.provider}</dd>
+            <div className="flex flex-col gap-2">
+              <h3 className="font-display font-black text-3xl uppercase tracking-tighter">Digital Heroes <span className="capitalize">{subscription?.plan_type || 'Monthly'}</span></h3>
+              <p className="font-bold text-brand-muted">
+                Valid until {formatFullDate(subscription?.current_period_end || '')}
+              </p>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Current Period Start</dt>
-              <dd className="text-lg">{new Date(subscription.current_period_start).toLocaleDateString()}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Current Period End</dt>
-              <dd className="text-lg">{new Date(subscription.current_period_end).toLocaleDateString()}</dd>
-            </div>
-          </dl>
-
-          {subscription.status === 'active' ? (
+          </div>
+          
+          <div className="flex justify-start">
             <button
               onClick={handleCancel}
               disabled={loading}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+              className="text-sm font-bold uppercase tracking-widest text-brand-accent underline decoration-2 underline-offset-4 hover:text-brand-primary transition-colors"
             >
               {loading ? 'Processing...' : 'Cancel Subscription'}
             </button>
-          ) : (
-            <p className="text-amber-600 text-sm font-medium">
-              Your subscription is canceled but remains active until the end of the billing period.
-            </p>
-          )}
+          </div>
         </div>
       ) : (
-        <div className="p-6 bg-white border rounded-lg shadow-sm">
-          <h2 className="text-xl font-bold mb-4">Your subscription is currently inactive.</h2>
-          <p className="text-gray-600 mb-6">
-            Subscribe to Digital Heroes to enter our monthly draws and support your selected charity.
-          </p>
+        <div className="flex flex-col gap-6">
+          <div className="p-6 bg-brand-accent text-white border-2 border-brand-text">
+            <h3 className="font-display font-black text-3xl uppercase tracking-tighter mb-2">Activate Your Account</h3>
+            <p className="font-bold text-white/80">
+              An active subscription is required to enter official draws and win prizes.
+            </p>
+          </div>
 
-          <form onSubmit={handleSimulatePayment} className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label
-                className={`flex flex-col p-4 border-2 rounded-lg cursor-pointer ${selectedPlan === 'monthly' ? 'border-black bg-gray-50' : 'border-gray-200'
-                  }`}
-              >
-                <input
-                  type="radio"
-                  name="plan"
-                  value="monthly"
-                  checked={selectedPlan === 'monthly'}
-                  onChange={() => setSelectedPlan('monthly')}
-                  className="sr-only"
-                />
-                <span className="text-lg font-bold">Monthly Plan</span>
-                <span className="text-gray-600">£9.99 / month</span>
-              </label>
+          <form onSubmit={handleSimulatePayment} className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4">
+              <span className="font-bold uppercase tracking-widest text-sm text-brand-muted">Select Plan</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label className={`cursor-pointer border-2 p-6 flex flex-col gap-2 transition-colors ${
+                  selectedPlan === 'monthly' ? 'border-brand-text bg-white' : 'border-transparent bg-brand-bg opacity-70 hover:opacity-100'
+                }`}>
+                  <input
+                    type="radio"
+                    name="plan"
+                    value="monthly"
+                    checked={selectedPlan === 'monthly'}
+                    onChange={(e) => setSelectedPlan(e.target.value as 'monthly' | 'yearly')}
+                    className="sr-only"
+                  />
+                  <span className="font-display font-black text-2xl uppercase tracking-tighter text-brand-text">Monthly</span>
+                  <span className="font-bold text-brand-primary">£10.00 / month</span>
+                </label>
 
-              <label
-                className={`flex flex-col p-4 border-2 rounded-lg cursor-pointer ${selectedPlan === 'yearly' ? 'border-black bg-gray-50' : 'border-gray-200'
-                  }`}
-              >
-                <input
-                  type="radio"
-                  name="plan"
-                  value="yearly"
-                  checked={selectedPlan === 'yearly'}
-                  onChange={() => setSelectedPlan('yearly')}
-                  className="sr-only"
-                />
-                <span className="text-lg font-bold">Yearly Plan</span>
-                <span className="text-gray-600">£99.90 / year (Save 16%)</span>
-              </label>
+                <label className={`cursor-pointer border-2 p-6 flex flex-col gap-2 transition-colors ${
+                  selectedPlan === 'yearly' ? 'border-brand-text bg-white' : 'border-transparent bg-brand-bg opacity-70 hover:opacity-100'
+                }`}>
+                  <input
+                    type="radio"
+                    name="plan"
+                    value="yearly"
+                    checked={selectedPlan === 'yearly'}
+                    onChange={(e) => setSelectedPlan(e.target.value as 'monthly' | 'yearly')}
+                    className="sr-only"
+                  />
+                  <span className="font-display font-black text-2xl uppercase tracking-tighter text-brand-text">Yearly</span>
+                  <span className="font-bold text-brand-primary">£100.00 / year</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-brand-accent mt-1">Save 17%</span>
+                </label>
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-3 bg-black text-white font-bold rounded hover:bg-gray-800 disabled:opacity-50"
+              className="btn-primary w-full sm:w-auto self-start"
             >
               {loading ? 'Processing...' : 'Simulate Payment'}
             </button>
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-muted">
+              (This is a simulated payment for demo purposes. No real charges are made.)
+            </p>
           </form>
         </div>
       )}
